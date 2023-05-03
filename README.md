@@ -1,6 +1,6 @@
 # jenkins-nvm-zowe-cli
 
-Jenkins build agent with the ability to install the npm keytar package for credential management, and with most of Zowe CLI preinstalled (SCS not included). Builds on [jenkins-nvm-keytar](https://github.com/awharn/jenkins-nvm-keytar).
+Jenkins build agent with the ability to install the npm keytar package for credential management, and with most of Zowe CLI preinstalled. Builds on [jenkins-nvm-keytar](https://github.com/awharn/jenkins-nvm-keytar).
 
 **NOTE:** This image must have the capability `IPC_LOCK` or run as privilaged to properly operate. This can be done on the run command by adding `--cap-add ipc_lock` or `--privileged` respectively. Not specifying this capability will result in the following messages when trying to start the gnome keyring daemon: 
 
