@@ -9,4 +9,4 @@ set +m
 
 zowe daemon enable > /dev/null 2>&1 || true
 grep -qF "export PATH=/home/jenkins/.zowe/bin:\$PATH" ~/.bashrc || echo "export PATH=/home/jenkins/.zowe/bin:\$PATH" >> ~/.bashrc
-zowe --daemon > /dev/null 2>&1 &
+zowe --daemon > /dev/null 2>&1 & || true
