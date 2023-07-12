@@ -11,9 +11,6 @@ else
     PKG_TAG=$1
 fi
 
-if [ ! -z "$2" ]; then
-    ALLOW_PLUGIN_INSTALL_FAIL=$2
-fi
 
 # Reload the following - recommended for making nvm available to the script
 . ~/.nvm/nvm.sh
@@ -27,14 +24,18 @@ npm config set @zowe:registry https://zowe.jfrog.io/artifactory/api/npm/npm-loca
 rm -rf ~/.zowe/plugins
 npm install -g @zowe/cli@${PKG_TAG}
 
+plugins=( @zowe/cics-for-zowe-cli@${PKG_TAG} @zowe/ims-for-zowe-cli@${PKG_TAG} @zowe/mq-for-zowe-cli@${PKG_TAG} @zowe/zos-ftp-for-zowe-cli@${PKG_TAG} )
+
+if [ "$HOSTTYPE" == "x86_64" ]; then
+    plugins+=( @zowe/db2-for-zowe-cli@${PKG_TAG} )
+fi
+
 if [ "$PKG_TAG" == "zowe-v1-lts" ]; then
-    plugins=( @zowe/cics-for-zowe-cli@${PKG_TAG} @zowe/db2-for-zowe-cli@${PKG_TAG} @zowe/ims-for-zowe-cli@${PKG_TAG} @zowe/mq-for-zowe-cli@${PKG_TAG} @zowe/secure-credential-store-for-zowe-cli@${PKG_TAG} @zowe/zos-ftp-for-zowe-cli@${PKG_TAG} )
-else
-    plugins=( @zowe/cics-for-zowe-cli@${PKG_TAG} @zowe/db2-for-zowe-cli@${PKG_TAG} @zowe/ims-for-zowe-cli@${PKG_TAG} @zowe/mq-for-zowe-cli@${PKG_TAG} @zowe/zos-ftp-for-zowe-cli@${PKG_TAG} )
+    plugins+=( @zowe/secure-credential-store-for-zowe-cli@${PKG_TAG} )
 fi
 
 for i in "${plugins[@]}"; do
-    if [ ! -z "${ALLOW_PLUGIN_INSTALL_FAIL}" ]; then
+    if [ "$ALLOW_PLUGIN_INSTALL_FAIL" == "true" ]; then
         zowe plugins install $i || true
     else
         zowe plugins install $i || exit 1

@@ -6,11 +6,14 @@ USER root
 
 ARG scriptsDir=/usr/local/bin/
 ARG ZOWE_VERSION=zowe-v2-lts
+ARG USE_ZOWE_DAEMON=false
+ARG ALLOW_PLUGIN_INSTALL_FAIL=false
 COPY docker-entrypoint-zowe.sh ${scriptsDir}
 COPY install_zowe.sh ${scriptsDir}
+COPY enable_daemon.sh ${scriptsDir}
 
 # Install zowe-v2-lts by default
-RUN su -c "install_zowe.sh ${ZOWE_VERSION}" - jenkins 
+RUN su -c "install_zowe.sh ${ZOWE_VERSION}" - jenkins
 
 ENTRYPOINT ["docker-entrypoint-zowe.sh"]
 
