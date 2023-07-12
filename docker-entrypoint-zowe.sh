@@ -34,7 +34,7 @@ if [ $UID == "0" ]; then
 
     if [ ! -z "$TAG" ]; then
         # Do the install for jenkins
-        su -c "install_zowe.sh $TAG $APIF" - jenkins
+        su -w ALLOW_PLUGIN_INSTALL_FAIL -c "install_zowe.sh $TAG" - jenkins
     fi
 
     if [ "$USE_ZOWE_DAEMON" == "true" ]; then

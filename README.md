@@ -35,6 +35,6 @@ echo 'jenkins' | gnome-keyring-daemon -r -d --unlock
 | $NODE_JS_NVM_VERSION | set to the desired version of NodeJS that the agent should use |
 | $PKG_TAG | set to the package tag of Zowe CLI to install |
 | $ALLOW_PLUGIN_INSTALL_FAIL | set to `true` to allow the container to continue running after a plug-in installation failure |
-| $USE_ZOWE_DAEMON | set to `true` to use the Zowe CLI Daemon (v2 LTS only) |
+| $USE_ZOWE_DAEMON | set to `true` to use the Zowe CLI Daemon (v2 LTS only) - only for Jenkins use |
 
 See [jenkins-nvm-agent](https://github.com/tucker01/jenkins-nvm-agent) README for details on setting Node.js version via environment variables.
