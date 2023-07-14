@@ -105,8 +105,8 @@ jobs:
           build-args: |
             ZOWE_VERSION=zowe-v1-lts
           tags: |
-            awharn/jenkins-nvm-zowe-cli:zowe-v1-lts
-            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli:zowe-v1-lts
+            awharn/jenkins-nvm-zowe-cli-arm:zowe-v1-lts
+            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli-arm:zowe-v1-lts
       
       - name: Image Digest
         run:  echo ${{ steps.build.outputs.digest }}
@@ -140,10 +140,10 @@ jobs:
           build-args: |
             ZOWE_VERSION=zowe-v2-lts
           tags: |
-            awharn/jenkins-nvm-zowe-cli:latest
-            awharn/jenkins-nvm-zowe-cli:zowe-v2-lts
-            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli:latest
-            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli:zowe-v2-lts
+            awharn/jenkins-nvm-zowe-cli-arm:latest
+            awharn/jenkins-nvm-zowe-cli-arm:zowe-v2-lts
+            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli-arm:latest
+            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli-arm:zowe-v2-lts
       
       - name: Image Digest
         run:  echo ${{ steps.build.outputs.digest }}
