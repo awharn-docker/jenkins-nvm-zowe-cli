@@ -28,7 +28,7 @@ if [ $UID == "0" ]; then
         su -c "install_node.sh $VERSION" - jenkins
 
         if [ -z "$TAG" ]; then
-            TAG=zowe-v2-lts
+            TAG=zowe-v3-lts
         fi
     fi
 
@@ -49,7 +49,7 @@ else
         install_node.sh $VERSION
 
         if [ -z "$TAG" ]; then
-            TAG=zowe-v2-lts
+            TAG=zowe-v3-lts
         fi
     fi
 
