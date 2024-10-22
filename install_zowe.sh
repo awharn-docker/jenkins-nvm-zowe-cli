@@ -5,8 +5,8 @@ set -e
 
 # Ensure that a version was passed
 if [ -z "$1" ]; then
-    echo "No package tag was specified. Installing zowe-v2-lts."
-    PKG_TAG=zowe-v2-lts
+    echo "No package tag was specified. Installing zowe-v3-lts."
+    PKG_TAG=zowe-v3-lts
 else 
     PKG_TAG=$1
 fi
@@ -24,7 +24,7 @@ npm config set @zowe:registry https://zowe.jfrog.io/artifactory/api/npm/npm-loca
 rm -rf ~/.zowe/plugins
 npm install -g @zowe/cli@${PKG_TAG}
 
-plugins=( @zowe/cics-for-zowe-cli@${PKG_TAG} @zowe/ims-for-zowe-cli@${PKG_TAG} @zowe/mq-for-zowe-cli@${PKG_TAG} @zowe/zos-ftp-for-zowe-cli@${PKG_TAG} )
+plugins=( @zowe/cics-for-zowe-cli@${PKG_TAG} @zowe/mq-for-zowe-cli@${PKG_TAG} @zowe/zos-ftp-for-zowe-cli@${PKG_TAG} )
 
 if [ "$HOSTTYPE" == "x86_64" ]; then
     plugins+=( @zowe/db2-for-zowe-cli@${PKG_TAG} )
@@ -32,6 +32,10 @@ fi
 
 if [ "$PKG_TAG" == "zowe-v1-lts" ]; then
     plugins+=( @zowe/secure-credential-store-for-zowe-cli@${PKG_TAG} )
+fi
+
+if [ "$PKG_TAG" == "zowe-v2-lts" ] || [ "$PKG_TAG" == "zowe-v1-lts" ]; then
+    plugins+=( @zowe/ims-for-zowe-cli@${PKG_TAG} )
 fi
 
 for i in "${plugins[@]}"; do

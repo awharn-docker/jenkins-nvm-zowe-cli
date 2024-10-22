@@ -6,15 +6,15 @@ on:
   workflow_dispatch:
 
 env:
-  MAIN_ZOWE_VERSION: zowe-v2-lts
+  MAIN_ZOWE_VERSION: zowe-v3-lts
 
 jobs:
   build-and-deploy-x64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        zowe: [zowe-v1-lts, zowe-v2-lts]
+        zowe: [zowe-v1-lts, zowe-v2-lts, zowe-v3-lts]
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -34,7 +34,7 @@ jobs:
 
       - name: Build & Push
         id:   build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           platforms: linux/amd64
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zowe: [zowe-v1-lts, zowe-v2-lts]
+        zowe: [zowe-v1-lts, zowe-v2-lts, zowe-v3-lts]
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -77,7 +77,7 @@ jobs:
 
       - name: Build & Push
         id:   build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           file: Dockerfile-arm64
@@ -95,7 +95,7 @@ jobs:
         run:  echo ${{ steps.build.outputs.digest }}
 
   update-downstream:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: 
       - build-and-deploy-x64
       - build-and-deploy-arm
