@@ -20,7 +20,7 @@ fi
 # Install the requested version, use the version, and set the default
 # for any further terminals
 
-npm config set @zowe:registry https://zowe.jfrog.io/artifactory/api/npm/npm-local-release/
+# npm config set @zowe:registry https://zowe.jfrog.io/artifactory/api/npm/npm-local-release/
 rm -rf ~/.zowe/plugins
 npm install -g @zowe/cli@${PKG_TAG}
 
