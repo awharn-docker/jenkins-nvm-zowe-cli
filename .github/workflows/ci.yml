@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - 'master'
-      - 'update-ci'
   workflow_dispatch:
 
 env:
@@ -107,7 +106,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT }}
           logout: false
 
       - name: Build & Push
@@ -178,6 +177,11 @@ jobs:
         tags: |
           type=raw,value=${{ matrix.zowe }}
           ${{ matrix.zowe == env.MAIN_ZOWE_VERSION && 'type=raw,value=latest' || '' }}
+    
+    - name: Wait for others
+      if: matrix.zowe == env.MAIN_ZOWE_VERSION
+      run: sleep 30
+    
     - name: Create manifest list and push
       working-directory: ${{ runner.temp }}/digests
       run: |
@@ -191,11 +195,11 @@ jobs:
         docker buildx imagetools inspect ${{ env.DOCKERHUB_REPO }}:${{ steps.meta.outputs.version }}
         docker buildx imagetools inspect ${{ env.GHCR_REPO }}:${{ steps.meta.outputs.version }}
 
-  # update-downstream:
-  #   runs-on: ubuntu-22.04
-  #   needs: merge
-  #   steps:
-  #     - name: Update Downstream
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.PAT }}
-  #       run: gh workflow run -R awharn-docker/jenkins-nvm-zowe-cli-extended -r master ci.yml
+  update-downstream:
+    runs-on: ubuntu-22.04
+    needs: merge
+    steps:
+      - name: Update Downstream
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        run: gh workflow run -R awharn-docker/jenkins-nvm-zowe-cli-extended -r master ci.yml
