@@ -55,6 +55,7 @@ jobs:
           platforms: linux/amd64
           build-args: |
             ZOWE_VERSION=${{ matrix.zowe }}
+          labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,"name=${{ env.DOCKERHUB_REPO }},${{ env.GHCR_REPO }}",push-by-digest=true,name-canonical=true,push=true
       
       - name: Export digest
@@ -116,6 +117,7 @@ jobs:
           push: true
           file: Dockerfile-arm64
           platforms: linux/arm64
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             ZOWE_VERSION=${{ matrix.zowe }}
           outputs: type=image,"name=${{ env.DOCKERHUB_REPO }},${{ env.GHCR_REPO }}",push-by-digest=true,name-canonical=true,push=true
