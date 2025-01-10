@@ -7,6 +7,9 @@ on:
 
 env:
   MAIN_ZOWE_VERSION: zowe-v3-lts
+  DOCKERHUB_USERNAME: awharn
+  DOCKERHUB_REPO: awharn/jenkins-nvm-zowe-cli
+  GHCR_REPO: ghcr.io/awharn-docker/jenkins-nvm-zowe-cli
 
 jobs:
   build-and-deploy-x64:
@@ -16,13 +19,24 @@ jobs:
       matrix:
         zowe: [zowe-v1-lts, zowe-v2-lts, zowe-v3-lts]
     steps:
+      - name: Prepare
+        run: echo "PLATFORM_PAIR=${{matrix.zowe}}-linux-amd64" >> $GITHUB_ENV
+
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_REPO }}
+            ${{ env.GHCR_REPO }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Login to Dockerhub
         uses: docker/login-action@v3
         with:
-          username: awharn
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
@@ -40,14 +54,23 @@ jobs:
           platforms: linux/amd64
           build-args: |
             ZOWE_VERSION=${{ matrix.zowe }}
-          tags: |
-            awharn/jenkins-nvm-zowe-cli:${{ matrix.zowe }}
-            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli:${{ matrix.zowe }}
-            ${{ matrix.zowe == env.MAIN_ZOWE_VERSION && 'awharn/jenkins-nvm-zowe-cli:latest' || '' }}
-            ${{ matrix.zowe == env.MAIN_ZOWE_VERSION && 'ghcr.io/awharn-docker/jenkins-nvm-zowe-cli:latest' || '' }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,"name=${{ env.DOCKERHUB_REPO }},${{ env.GHCR_REPO }}",push-by-digest=true,name-canonical=true,push=true
       
-      - name: Image Digest
-        run:  echo ${{ steps.build.outputs.digest }}
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
 
   build-and-deploy-arm:
     runs-on: fastarm
@@ -56,14 +79,25 @@ jobs:
       matrix:
         zowe: [zowe-v1-lts, zowe-v2-lts, zowe-v3-lts]
     steps:
+      - name: Prepare
+        run: echo "PLATFORM_PAIR=${{matrix.zowe}}-linux-arm64" >> $GITHUB_ENV
+
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_REPO }}
+            ${{ env.GHCR_REPO }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         id: builder
-      
+
       - name: Login to Dockerhub
         uses: docker/login-action@v3
         with:
-          username: awharn
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           logout: false
 
@@ -72,7 +106,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT }}
           logout: false
 
       - name: Build & Push
@@ -80,25 +114,90 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          file: Dockerfile-arm64
           platforms: linux/arm64
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             ZOWE_VERSION=${{ matrix.zowe }}
-          tags: |
-            awharn/jenkins-nvm-zowe-cli-arm:${{ matrix.zowe }}
-            ghcr.io/awharn-docker/jenkins-nvm-zowe-cli-arm:${{ matrix.zowe }}
-            ${{ matrix.zowe == env.MAIN_ZOWE_VERSION && 'awharn/jenkins-nvm-zowe-cli-arm:latest' || '' }}
-            ${{ matrix.zowe == env.MAIN_ZOWE_VERSION && 'ghcr.io/awharn-docker/jenkins-nvm-zowe-cli-arm:latest' || '' }}
+          outputs: type=image,"name=${{ env.DOCKERHUB_REPO }},${{ env.GHCR_REPO }}",push-by-digest=true,name-canonical=true,push=true
           builder: ${{ steps.builder.outputs.name }}
       
-      - name: Image Digest
-        run:  echo ${{ steps.build.outputs.digest }}
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+      
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
+
+  merge:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        zowe: [zowe-v1-lts, zowe-v2-lts, zowe-v3-lts]
+    needs: [build-and-deploy-x64, build-and-deploy-arm]
+    steps:
+    - name: Download digests
+      uses: actions/download-artifact@v4
+      with:
+        path: ${{ runner.temp }}/digests
+        pattern: digests-${{ matrix.zowe }}-*
+        merge-multiple: true
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ env.DOCKERHUB_REPO }}
+          ${{ env.GHCR_REPO }}
+        tags: |
+          type=raw,value=${{ matrix.zowe }}
+          ${{ matrix.zowe == env.MAIN_ZOWE_VERSION && 'type=raw,value=latest' || '' }}
+
+    - name: Wait for others
+      if: matrix.zowe == env.MAIN_ZOWE_VERSION
+      run: sleep 30
+    
+    - name: Create manifest list and push
+      working-directory: ${{ runner.temp }}/digests
+      run: |
+        docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+          $(printf '${{ env.DOCKERHUB_REPO }}@sha256:%s ' *)
+        docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+          $(printf '${{ env.GHCR_REPO }}@sha256:%s ' *)
+
+    - name: Inspect image
+      run: |
+        docker buildx imagetools inspect ${{ env.DOCKERHUB_REPO }}:${{ steps.meta.outputs.version }}
+        docker buildx imagetools inspect ${{ env.GHCR_REPO }}:${{ steps.meta.outputs.version }}
 
   update-downstream:
     runs-on: ubuntu-22.04
-    needs: 
-      - build-and-deploy-x64
-      - build-and-deploy-arm
+    needs: merge
     steps:
       - name: Update Downstream
         env:
